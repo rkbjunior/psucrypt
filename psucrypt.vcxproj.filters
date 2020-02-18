@@ -29,5 +29,8 @@
     <Text Include="keysched.txt">
       <Filter>Source Files</Filter>
     </Text>
+    <Text Include="key2.txt">
+      <Filter>Source Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

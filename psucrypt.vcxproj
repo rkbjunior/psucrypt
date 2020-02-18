@@ -127,6 +127,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="key.txt" />
+    <Text Include="key2.txt" />
     <Text Include="keysched.txt" />
     <Text Include="plaintext.txt" />
   </ItemGroup>
