@@ -1,5 +1,7 @@
 #include <cstdint>
 #include <vector>
+#include <iomanip>
+#include <iostream>
 #include "helpers.h"
 
 using namespace std;
@@ -35,6 +37,15 @@ uint16_t g(uint16_t w, int* round, const vector<uint8_t>* subkeys) {
     uint16_t g56 = ((uint16_t)g5 << 8) | g6;
 
     *round = *round + 1;
+
+    cout << "G Permutations: ";
+    cout << "g1: " << std::hex << unsigned(g1) << std::dec;
+    cout << " g2: " << std::hex << unsigned(g2) << std::dec;
+    cout << " g3: " << std::hex << unsigned(g3) << std::dec; 
+    cout << " g4: " << std::hex << unsigned(g4) << std::dec;
+    cout << " g5: " << std::hex << unsigned(g5) << std::dec;
+    cout << " g6: " << std::hex << unsigned(g6) << std::dec << endl;
+
     return g56;
 
 }
@@ -44,6 +55,9 @@ vector<uint16_t> f(uint16_t r0, uint16_t r1, int* round, const vector<uint8_t>* 
     //t0 = 33523  t1 = 63870
     uint16_t t0 = g(r0, round, subkeys);
     uint16_t t1 = g(r1, round, subkeys);
+
+    cout << "t0: " << std::hex << unsigned(t0) << std::dec;
+    cout << " t1: " << std::hex << unsigned(t1) << std::dec << endl;
 
     //uint8_t subKey0 = subkeys->at(4 * (*round));
     //uint8_t subKey1 = subkeys->at(4 * (*round) + 1);
@@ -55,6 +69,9 @@ vector<uint16_t> f(uint16_t r0, uint16_t r1, int* round, const vector<uint8_t>* 
 
     uint16_t f0 = (t0 + 2 * t1 + key1) % 65536;
     uint16_t f1 = (2 * t0 + t1 + key2) % 65536;
+
+    cout << "f0: " << std::hex << unsigned(f0) << std::dec;
+    cout << " f1: " << std::hex << unsigned(f1) << std::dec << endl;
 
     vector<uint16_t> result;
     result.push_back(f0);
@@ -99,4 +116,74 @@ uint64_t WhitenKey(uint64_t key, uint64_t plaintext) {
 
     uint64_t wKey = key ^ plaintext;
     return wKey;
+}
+
+uint64_t encrypt(uint64_t * key, uint64_t * plaintextBlock) {
+    uint64_t wKey = WhitenKey(*key, *plaintextBlock);
+
+    //Compute all the subkeys
+    vector<uint8_t> subkeys;
+    encrypt_ksched(key, &subkeys);
+
+    vector<uint16_t> result;
+
+    uint16_t nextR3 = wKey & 0x000000000000FFFF;
+    uint16_t nextR2 = (wKey >> 16) & 0x000000000000FFFF;
+    uint16_t nextR1 = (wKey >> 32) & 0x000000000000FFFF;
+    uint16_t nextR0 = (wKey >> 48) & 0x000000000000FFFF;
+
+    cout << "ENCRYPTION" << endl;
+    cout << "Plaintext: " << std::hex << plaintextBlock << std::dec << endl;
+    cout << "Key = " << std::hex << key << std::dec << endl;
+    cout << "Whitened Key = " << std::hex << wKey << std::dec << endl << endl;
+
+    int round = 0;
+    for (int i = 0; i < 16; i++) {
+
+        cout << "Beginning of round " << i << endl;
+        cout << "Keys (hex): ";
+
+        for (int j = 0; j < 12; j++) {
+            cout << std::hex << unsigned(subkeys[j]) << std::dec << " ";
+        }
+
+        cout << endl;
+        cout << "Keys (dec): ";
+
+        for (int j = 0; j < 12; j++) {
+            cout << unsigned(subkeys[j]) << " ";
+        }
+
+        cout << endl;
+
+        //save r0 and r1 so we can use them in the next round
+        uint16_t tempR0 = nextR0;
+        uint16_t tempR1 = nextR1;
+
+        result = f(nextR0, nextR1, &round, &subkeys);
+        nextR0 = nextR2 ^ result.at(0);
+        nextR1 = nextR3 ^ result.at(1);
+        nextR2 = tempR0;
+        nextR3 = tempR1;
+
+        round++;
+
+        cout << endl << endl;
+    }
+
+    uint16_t y0 = nextR2;
+    uint16_t y1 = nextR3;
+    uint16_t y2 = nextR0;
+    uint16_t y3 = nextR1;
+
+    uint64_t unswap = ((uint64_t)y0 << 48) + ((uint64_t)y1 << 32) + ((uint64_t)y2 << 16) + y3;
+
+    //undo the swap
+    //uint64_t unswap = ((uint64_t)nextR1 << 48) + ((uint64_t)nextR0 << 32) + ((uint64_t)nextR3 << 16) + nextR2;
+
+    uint64_t cipherText = WhitenKey(unswap, *key);
+
+    cout << "Ciphertext: 0x" << std::hex << unsigned(cipherText >> 32) << unsigned(cipherText) << std::dec << endl;
+
+    return cipherText;
 }
