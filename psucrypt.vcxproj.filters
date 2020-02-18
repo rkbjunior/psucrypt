@@ -18,6 +18,12 @@
     <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="psu_crypt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="plaintext.txt">
@@ -26,11 +32,19 @@
     <Text Include="key.txt">
       <Filter>Source Files</Filter>
     </Text>
-    <Text Include="keysched.txt">
-      <Filter>Source Files</Filter>
-    </Text>
     <Text Include="key2.txt">
       <Filter>Source Files</Filter>
     </Text>
+    <Text Include="keysched.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="helpers.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="psu_crypt.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
