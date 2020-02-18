@@ -1,7 +1,6 @@
 #include <fstream>
 #include <vector>
 #include <cstdint>
-#include "helpers.h"
 #include "psu_crypt.h"
 
 using namespace std;
