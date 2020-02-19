@@ -4,10 +4,11 @@
 #include <iostream>
 #include "helpers.h"
 #include "psu_crypt.h"
+#include "globals.h"
 
 using namespace std;
 
-int LOGGINGA = 1;
+int LOGGING = 2;
 
 /*
 Gets a 64 bit block from the plain text buffer.
@@ -18,7 +19,7 @@ being copied into a uint64_t
 Param: plainTextBuffer - A pointer to the current buffer of plain text.
 Returns: a uint64_t representation of the string.
 */
-uint64_t GetBlockOfPlainText(vector<char>* plainTextBuffer) {
+uint64_t psu_crypt::GetBlockOfPlainText(vector<char>* plainTextBuffer) {
     char pStream[sizeof(uint64_t)];
     std::reverse(plainTextBuffer->begin(), plainTextBuffer->begin() + 8);
     copy_n(plainTextBuffer->begin(), 8, pStream);
@@ -29,7 +30,7 @@ uint64_t GetBlockOfPlainText(vector<char>* plainTextBuffer) {
     return result;
 }
 
-uint16_t g(uint16_t w, int* round, const vector<uint8_t>* subkeys) {
+uint16_t psu_crypt::g(uint16_t w, int* round, const vector<uint8_t>* subkeys) {
     const int ftable[] = {
         0xa3,0xd7,0x09,0x83,0xf8,0x48,0xf6,0xf4,0xb3,0x21,0x15,0x78,0x99,0xb1,0xaf,0xf9,
         0xe7,0x2d,0x4d,0x8a,0xce,0x4c,0xca,0x2e,0x52,0x95,0xd9,0x1e,0x4e,0x38,0x44,0x28,
@@ -52,16 +53,18 @@ uint16_t g(uint16_t w, int* round, const vector<uint8_t>* subkeys) {
     const uint8_t g1 = (w >> 8) & 0xFF;
     const uint8_t g2 = w & 0xFF;
 
-    uint8_t g3 = ftable[getSkipJackIndex(g2 ^ subkeys->at(4 * *round))] ^ g1;
-    uint8_t g4 = ftable[getSkipJackIndex(g3 ^ subkeys->at(4 * *round + 1))] ^ g2;
-    uint8_t g5 = ftable[getSkipJackIndex(g4 ^ subkeys->at(4 * *round + 2))] ^ g3;
-    uint8_t g6 = ftable[getSkipJackIndex(g5 ^ subkeys->at(4 * *round + 3))] ^ g4;
+    helpers help;
+
+    uint8_t g3 = ftable[help.getSkipJackIndex(g2 ^ subkeys->at(4 * *round))] ^ g1;
+    uint8_t g4 = ftable[help.getSkipJackIndex(g3 ^ subkeys->at(4 * *round + 1))] ^ g2;
+    uint8_t g5 = ftable[help.getSkipJackIndex(g4 ^ subkeys->at(4 * *round + 2))] ^ g3;
+    uint8_t g6 = ftable[help.getSkipJackIndex(g5 ^ subkeys->at(4 * *round + 3))] ^ g4;
 
     uint16_t g56 = ((uint16_t)g5 << 8) | g6;
 
     *round = *round + 1;
 
-    if (LOGGINGA > 1) {
+    if (LOGGING > 1) {
         cout << "G Permutations: ";
         cout << "g1: " << std::hex << unsigned(g1) << std::dec;
         cout << " g2: " << std::hex << unsigned(g2) << std::dec;
@@ -75,13 +78,13 @@ uint16_t g(uint16_t w, int* round, const vector<uint8_t>* subkeys) {
 
 }
 
-vector<uint16_t> f(uint16_t r0, uint16_t r1, int* round, const vector<uint8_t>* subkeys) {
+vector<uint16_t> psu_crypt::f(uint16_t r0, uint16_t r1, int* round, const vector<uint8_t>* subkeys) {
 
     //t0 = 33523  t1 = 63870
     uint16_t t0 = g(r0, round, subkeys);
     uint16_t t1 = g(r1, round, subkeys);
 
-    if (LOGGINGA > 1) {
+    if (LOGGING > 1) {
         cout << "t0: " << std::hex << unsigned(t0) << std::dec;
         cout << " t1: " << std::hex << unsigned(t1) << std::dec << endl;
     }
@@ -92,7 +95,7 @@ vector<uint16_t> f(uint16_t r0, uint16_t r1, int* round, const vector<uint8_t>* 
     uint16_t f0 = (t0 + 2 * t1 + key1) % 65536;
     uint16_t f1 = (2 * t0 + t1 + key2) % 65536;
 
-    if (LOGGINGA > 1) {
+    if (LOGGING > 1) {
         cout << "f0: " << std::hex << unsigned(f0) << std::dec;
         cout << " f1: " << std::hex << unsigned(f1) << std::dec << endl;
     }
@@ -104,7 +107,7 @@ vector<uint16_t> f(uint16_t r0, uint16_t r1, int* round, const vector<uint8_t>* 
     return result;
 }
 
-void encrypt_ksched(uint64_t* key, vector<uint8_t>* subkeys) {
+void psu_crypt::encrypt_ksched(uint64_t* key, vector<uint8_t>* subkeys) {
 
     int round = 0;
     bool toggle = false;
@@ -113,7 +116,9 @@ void encrypt_ksched(uint64_t* key, vector<uint8_t>* subkeys) {
         uint32_t tempkey;
         uint8_t subKey;
 
-        *key = leftRotate(*key, 1);
+        helpers help;
+
+        *key = help.leftRotate(*key, 1);
 
         if (toggle) {
             tempkey = *key >> 32 & 0x00000000FFFFFFFF;
@@ -136,13 +141,13 @@ void encrypt_ksched(uint64_t* key, vector<uint8_t>* subkeys) {
     }
 }
 
-uint64_t WhitenKey(uint64_t key, uint64_t plaintext) {
+uint64_t psu_crypt::WhitenKey(uint64_t key, uint64_t plaintext) {
 
     uint64_t wKey = key ^ plaintext;
     return wKey;
 }
 
-uint64_t encrypt_decrypt(uint64_t * key, uint64_t * plaintextBlock, bool encrypt) {
+uint64_t psu_crypt::encrypt_decrypt(uint64_t * key, uint64_t * plaintextBlock, bool encrypt) {
     uint64_t wKey = WhitenKey(*key, *plaintextBlock);
 
     vector<uint8_t> subkeys;
@@ -171,7 +176,7 @@ uint64_t encrypt_decrypt(uint64_t * key, uint64_t * plaintextBlock, bool encrypt
     uint16_t nextR1 = (wKey >> 32) & 0x000000000000FFFF;
     uint16_t nextR0 = (wKey >> 48) & 0x000000000000FFFF;
 
-    if (LOGGINGA > 1) {
+    if (LOGGING > 1) {
         cout << mode << endl;
         cout << blockType << std::hex << *plaintextBlock << std::dec << endl;
         cout << "Key = " << std::hex << *key << std::dec << endl;
@@ -181,7 +186,7 @@ uint64_t encrypt_decrypt(uint64_t * key, uint64_t * plaintextBlock, bool encrypt
     int round = 0;
     for (int i = 0; i < 16; i++) {
 
-        if (LOGGINGA > 1) {
+        if (LOGGING > 1) {
             cout << "Beginning of round " << i << endl;
             cout << "Keys (hex): ";
 
@@ -211,7 +216,7 @@ uint64_t encrypt_decrypt(uint64_t * key, uint64_t * plaintextBlock, bool encrypt
 
         round++;
 
-        if (LOGGINGA > 1) {
+        if (LOGGING > 1) {
             cout << endl << endl;
         }
     }
@@ -225,7 +230,7 @@ uint64_t encrypt_decrypt(uint64_t * key, uint64_t * plaintextBlock, bool encrypt
 
     uint64_t block = WhitenKey(unswap, *key);
 
-    if (LOGGINGA > 1) {
+    if (LOGGING > 1) {
         if (blockType == "Ciphertext: ") {
             cout << "Plaintext: 0x" << std::hex << unsigned(block >> 32) << unsigned(block) << std::dec << endl;
         }

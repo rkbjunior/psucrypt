@@ -7,9 +7,10 @@
 #include "helpers.h"
 #include "fileio.h"
 
+
 using namespace std;
 
-void GetPlainTextFromFile(vector<char>* plainTextBuffer, string fileName) {
+void fileio::GetPlainTextFromFile(vector<char>* plainTextBuffer, string fileName) {
     ifstream plaintextFile(fileName, ios::in | ios::binary | std::ios::ate);
     streamsize psize = plaintextFile.tellg();
 
@@ -26,7 +27,7 @@ void GetPlainTextFromFile(vector<char>* plainTextBuffer, string fileName) {
 
 }
 
-void GetCipherTextFromFile(vector<uint64_t>* cipherTextBuffer, string fileName) {
+void fileio::GetCipherTextFromFile(vector<uint64_t>* cipherTextBuffer, string fileName) {
     ifstream ciphertextFile;
     ciphertextFile.open(fileName, ios::in | ios::binary);
 
@@ -41,8 +42,9 @@ void GetCipherTextFromFile(vector<uint64_t>* cipherTextBuffer, string fileName) 
     cipherTextBuffer->pop_back();
 }
 
-void WriteToFile(uint64_t ciphertext, const char* fileName) {
+void fileio::WriteToFile(uint64_t ciphertext, const char* fileName) {
     ofstream outputFile;
+    helpers help;
 
     outputFile.open(fileName, ios::out | ios::binary | ios::app);
 
@@ -50,14 +52,14 @@ void WriteToFile(uint64_t ciphertext, const char* fileName) {
         outputFile << std::hex << ciphertext << std::dec << " ";
     }
     else {
-        string ptext = Convert64ToString(ciphertext);
+        string ptext = help.Convert64ToString(ciphertext);
 
         outputFile << ptext;
     }
 
 }
 
-uint64_t GetKeyFromFile(string fileName) {
+uint64_t fileio::GetKeyFromFile(string fileName) {
     ifstream keyFile;
     keyFile.open(fileName, ios::in | ios::binary);
 

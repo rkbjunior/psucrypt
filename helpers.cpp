@@ -17,7 +17,7 @@ The upper half of the value is row and the lower half of the value is the column
 
 Returns: An integer of the index for the skip jack lookup.
 */
-int getSkipJackIndex(uint8_t value) {
+int helpers::getSkipJackIndex(uint8_t value) {
     unsigned int row = (value >> 4) & 0xF;
     unsigned int col = (value) & 0xF;
 
@@ -35,7 +35,7 @@ Param: n - The number of bits to rotate
 
 Returns: The rotated uint64_t value
 */
-uint64_t leftRotate(uint64_t v, int n) {
+uint64_t helpers::leftRotate(uint64_t v, int n) {
     n = n & 63U;
     if (n) {
         v = (v << n) | (v >> (64 - n));
@@ -51,7 +51,7 @@ Param: value -  a uint64_t value to be converted
 
 Returns: An ascii representation of a uint64_t
 */
-string Convert64ToString(uint64_t value) {
+string helpers::Convert64ToString(uint64_t value) {
     string result;
 
     for (int i = 7; i >= 0; i--) {

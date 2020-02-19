@@ -134,6 +134,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fileio.h" />
+    <ClInclude Include="globals.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="psu_crypt.h" />
   </ItemGroup>

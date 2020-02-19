@@ -1,40 +1,35 @@
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <cstdint>
+#include <string>
 #include <iostream>
-#include <iomanip>
-#include <filesystem>
-#include "psu_crypt.h"
-#include "helpers.h"
+#include <vector>
+#include <fstream>
 #include "fileio.h"
+#include "psu_crypt.h"
+#include "globals.h"
 
 using namespace std;
-
-int LOGGING = 1;
 
 int main()
 {
     //If the ciphertext.txt exists, delete it.
-    if (LOGGING == 1 || LOGGING == 0)
-        cout << "Cleaning up some stuff...\n\n";
+    if (LOGGING > 0)
+        cout << "Cleaning up some stuff...\n";
 
     if (remove("ciphertext.txt") == 0) {
-        if (LOGGING == 1 || LOGGING == 0)
-            cout << "Deleted ciphertext.txt\n\n" ;
+        if (LOGGING > 0)
+            cout << "Deleted ciphertext.txt\n" ;
     }
     else {
-        if (LOGGING == 1 || LOGGING == 0)
-            cout << "ciphertext.txt was not found or has open handles\n\n";
+        if (LOGGING > 0)
+            cout << "ciphertext.txt was not found or has open handles\n";
     }
 
     //If the decrypted_plaintext.txt exists, delete it.
     if (remove("decrypted_plaintext.txt") == 0) {
-        if (LOGGING == 1 || LOGGING == 0)
+        if (LOGGING > 0)
             cout << "Deleted decrypted_plaintext.txt\n\n";
     }
     else {
-        if (LOGGING == 1 || LOGGING == 0)
+        if (LOGGING > 0)
             cout << "decrypted_plaintext.txt was not found or has open handles\n\n";
     }
 
@@ -42,9 +37,12 @@ int main()
     bool running = true;
     string fileName;
     string keyFileName;
-    vector<char> plainTextBuffer;
+    vector<char> ptextBuffer;
     vector<uint64_t> cipherTextBuffer;
     uint64_t key;
+
+    fileio file;
+    psu_crypt pcrypt;
 
     while (running != false) {
         cout << "*******************************\n";
@@ -57,7 +55,15 @@ int main()
 
         cin >> option;
 
-        cin.ignore();
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        }
+        else {
+            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        }
+
+        
 
         cout << endl;
 
@@ -79,16 +85,17 @@ int main()
             if (!keyFileName.length() > 0)
                 keyFileName = "key.txt";
 
-            GetPlainTextFromFile(&plainTextBuffer, fileName);
-            key = GetKeyFromFile(keyFileName);
+            
+            file.GetPlainTextFromFile(&ptextBuffer, fileName);
+            key = file.GetKeyFromFile(keyFileName);
 
-            while (plainTextBuffer.size() > 0) {
-                uint64_t plaintextBlock = GetBlockOfPlainText(&plainTextBuffer);
-                plainTextBuffer.erase(plainTextBuffer.begin(), plainTextBuffer.begin() + 8);
+            while (ptextBuffer.size() > 0) {
+                uint64_t plaintextBlock = pcrypt.GetBlockOfPlainText(&ptextBuffer);
+                ptextBuffer.erase(ptextBuffer.begin(), ptextBuffer.begin() + 8);
 
-                uint64_t block = encrypt_decrypt(&key, &plaintextBlock, true);
+                uint64_t block = pcrypt.encrypt_decrypt(&key, &plaintextBlock, true);
 
-                WriteToFile(block, "ciphertext.txt");
+                file.WriteToFile(block, "ciphertext.txt");
 
             }
 
@@ -108,16 +115,16 @@ int main()
                 keyFileName = "key.txt";
 
             //Read the files in this case the secret key is ab$ra85T
-            GetCipherTextFromFile(&cipherTextBuffer, fileName);
-            key = GetKeyFromFile(keyFileName);
+            file.GetCipherTextFromFile(&cipherTextBuffer, fileName);
+            key = file.GetKeyFromFile(keyFileName);
 
             while (cipherTextBuffer.size() > 0) {
                 uint64_t ciphertextBlock = cipherTextBuffer.at(0);
                 cipherTextBuffer.erase(cipherTextBuffer.begin(), cipherTextBuffer.begin() + 1);
 
-                uint64_t block = encrypt_decrypt(&key, &ciphertextBlock, false);
+                uint64_t block = pcrypt.encrypt_decrypt(&key, &ciphertextBlock, false);
 
-                WriteToFile(block, "decrypted_plaintext.txt");
+                file.WriteToFile(block, "decrypted_plaintext.txt");
 
             }
             break;
@@ -125,45 +132,26 @@ int main()
             cout << "Print file contents.\n";
             // rest of code here
             break;
+        case 4:
+            cout << "Change Log Options [0: NONE, 1: INFO, 2: VERBOSE]\n";
+            cin >> LOGGING;
+            if (cin.fail()) {
+                cin.clear();
+                cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
+            cout << endl;
+            break;
         case 5:
             cout << "End of Program.\n";
             running = false;
             break;
         default:
             cout << "Not a Valid Choice. \n";
-            cout << "Choose again.\n";
-            cin.clear();
-            cin >> option;
+            cout << "Choose again.\n\n";
             break;
         }
     }
         
-    //Read the files in this case the secret key is ab$ra85T
-   // vector<char> plaintextBuffer = GetPlainTextFromFile();
-
-
-
-    //uint64_t key = GetKeyFromFile();
-
-    //Get the first 64 bit block of plaintext to encrypt/decrypt
-    //Then remove those bits from the buffer so we dont read them again
-
-    //while (plainTextBuffer.size() > 0) {
-    //    uint64_t plaintextBlock = GetBlockOfPlainText(&plaintextBuffer);
-    //    plaintextBuffer.erase(plaintextBuffer.begin(), plaintextBuffer.begin() + 8);
-
-    //    uint64_t block = encrypt_decrypt(&key, &plaintextBlock, true);
-
-    //    WriteToFile(block, "ciphertext.txt");
-
-    //}
-
-
-   // uint64_t plainText = encrypt_decrypt(&key, &cipherText, false);
-
-    
-
-
     cout << "Good Bye from PSU_CRYPT!" << endl;
     return 0;
 }
