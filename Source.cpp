@@ -58,6 +58,9 @@ int main()
 {
     //Read the files in this case the secret key is ab$ra85T
     vector<char> plaintextBuffer = GetPlainTextFromFile();
+
+    while(plaintextBuffer)
+
     uint64_t key = GetKeyFromFile();
 
     //Get the first 64 bit block of plaintext to encrypt/decrypt
