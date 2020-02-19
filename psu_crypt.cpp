@@ -6,6 +6,8 @@
 
 using namespace std;
 
+int LOGGINGA = 1;
+
 uint16_t g(uint16_t w, int* round, const vector<uint8_t>* subkeys) {
     const int ftable[] = {
         0xa3,0xd7,0x09,0x83,0xf8,0x48,0xf6,0xf4,0xb3,0x21,0x15,0x78,0x99,0xb1,0xaf,0xf9,
@@ -38,13 +40,15 @@ uint16_t g(uint16_t w, int* round, const vector<uint8_t>* subkeys) {
 
     *round = *round + 1;
 
-    cout << "G Permutations: ";
-    cout << "g1: " << std::hex << unsigned(g1) << std::dec;
-    cout << " g2: " << std::hex << unsigned(g2) << std::dec;
-    cout << " g3: " << std::hex << unsigned(g3) << std::dec; 
-    cout << " g4: " << std::hex << unsigned(g4) << std::dec;
-    cout << " g5: " << std::hex << unsigned(g5) << std::dec;
-    cout << " g6: " << std::hex << unsigned(g6) << std::dec << endl;
+    if (LOGGINGA > 1) {
+        cout << "G Permutations: ";
+        cout << "g1: " << std::hex << unsigned(g1) << std::dec;
+        cout << " g2: " << std::hex << unsigned(g2) << std::dec;
+        cout << " g3: " << std::hex << unsigned(g3) << std::dec;
+        cout << " g4: " << std::hex << unsigned(g4) << std::dec;
+        cout << " g5: " << std::hex << unsigned(g5) << std::dec;
+        cout << " g6: " << std::hex << unsigned(g6) << std::dec << endl;
+    }
 
     return g56;
 
@@ -56,13 +60,10 @@ vector<uint16_t> f(uint16_t r0, uint16_t r1, int* round, const vector<uint8_t>* 
     uint16_t t0 = g(r0, round, subkeys);
     uint16_t t1 = g(r1, round, subkeys);
 
-    cout << "t0: " << std::hex << unsigned(t0) << std::dec;
-    cout << " t1: " << std::hex << unsigned(t1) << std::dec << endl;
-
-    //uint8_t subKey0 = subkeys->at(4 * (*round));
-    //uint8_t subKey1 = subkeys->at(4 * (*round) + 1);
-    //uint8_t subKey2 = subkeys->at(4 * (*round) + 2);
-    //uint8_t subKey3 = subkeys->at(4 * (*round) + 3);
+    if (LOGGINGA > 1) {
+        cout << "t0: " << std::hex << unsigned(t0) << std::dec;
+        cout << " t1: " << std::hex << unsigned(t1) << std::dec << endl;
+    }
 
     uint16_t key1 = (subkeys->at(4 * (*round)) << 8) | subkeys->at(4 * (*round) + 1);
     uint16_t key2 = (subkeys->at(4 * (*round) + 2) << 8) | subkeys->at(4 * (*round) + 3);
@@ -70,8 +71,10 @@ vector<uint16_t> f(uint16_t r0, uint16_t r1, int* round, const vector<uint8_t>* 
     uint16_t f0 = (t0 + 2 * t1 + key1) % 65536;
     uint16_t f1 = (2 * t0 + t1 + key2) % 65536;
 
-    cout << "f0: " << std::hex << unsigned(f0) << std::dec;
-    cout << " f1: " << std::hex << unsigned(f1) << std::dec << endl;
+    if (LOGGINGA > 1) {
+        cout << "f0: " << std::hex << unsigned(f0) << std::dec;
+        cout << " f1: " << std::hex << unsigned(f1) << std::dec << endl;
+    }
 
     vector<uint16_t> result;
     result.push_back(f0);
@@ -147,29 +150,33 @@ uint64_t encrypt_decrypt(uint64_t * key, uint64_t * plaintextBlock, bool encrypt
     uint16_t nextR1 = (wKey >> 32) & 0x000000000000FFFF;
     uint16_t nextR0 = (wKey >> 48) & 0x000000000000FFFF;
 
-    cout << mode << endl;
-    cout << blockType << std::hex << *plaintextBlock << std::dec << endl;
-    cout << "Key = " << std::hex << *key << std::dec << endl;
-    cout << "Whitened Key = " << std::hex << wKey << std::dec << endl << endl;
+    if (LOGGINGA > 1) {
+        cout << mode << endl;
+        cout << blockType << std::hex << *plaintextBlock << std::dec << endl;
+        cout << "Key = " << std::hex << *key << std::dec << endl;
+        cout << "Whitened Key = " << std::hex << wKey << std::dec << endl << endl;
+    }
 
     int round = 0;
     for (int i = 0; i < 16; i++) {
 
-        cout << "Beginning of round " << i << endl;
-        cout << "Keys (hex): ";
+        if (LOGGINGA > 1) {
+            cout << "Beginning of round " << i << endl;
+            cout << "Keys (hex): ";
 
-        for (int j = 0; j < 12; j++) {
-            cout << std::hex << unsigned(subkeys[j]) << std::dec << " ";
+            for (int j = 0; j < 12; j++) {
+                cout << std::hex << unsigned(subkeys[j]) << std::dec << " ";
+            }
+
+            cout << endl;
+            cout << "Keys (dec): ";
+
+            for (int j = 0; j < 12; j++) {
+                cout << unsigned(subkeys[j]) << " ";
+            }
+
+            cout << endl;
         }
-
-        cout << endl;
-        cout << "Keys (dec): ";
-
-        for (int j = 0; j < 12; j++) {
-            cout << unsigned(subkeys[j]) << " ";
-        }
-
-        cout << endl;
 
         //save r0 and r1 so we can use them in the next round
         uint16_t tempR0 = nextR0;
@@ -183,7 +190,9 @@ uint64_t encrypt_decrypt(uint64_t * key, uint64_t * plaintextBlock, bool encrypt
 
         round++;
 
-        cout << endl << endl;
+        if (LOGGINGA > 1) {
+            cout << endl << endl;
+        }
     }
 
     uint16_t y0 = nextR2;
@@ -193,16 +202,15 @@ uint64_t encrypt_decrypt(uint64_t * key, uint64_t * plaintextBlock, bool encrypt
 
     uint64_t unswap = ((uint64_t)y0 << 48) + ((uint64_t)y1 << 32) + ((uint64_t)y2 << 16) + y3;
 
-    //undo the swap
-    //uint64_t unswap = ((uint64_t)nextR1 << 48) + ((uint64_t)nextR0 << 32) + ((uint64_t)nextR3 << 16) + nextR2;
-
     uint64_t block = WhitenKey(unswap, *key);
 
-    if (blockType == "Ciphertext: ") {
-        cout << "Plaintext: 0x" << std::hex << unsigned(block >> 32) << unsigned(block) << std::dec << endl;
-    }
-    else {
-        cout << "Ciphertext: 0x" << std::hex << unsigned(block >> 32) << unsigned(block) << std::dec << endl;
+    if (LOGGINGA > 1) {
+        if (blockType == "Ciphertext: ") {
+            cout << "Plaintext: 0x" << std::hex << unsigned(block >> 32) << unsigned(block) << std::dec << endl;
+        }
+        else {
+            cout << "Ciphertext: 0x" << std::hex << unsigned(block >> 32) << unsigned(block) << std::dec << endl;
+        }
     }
 
     return block;

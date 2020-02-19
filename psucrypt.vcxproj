@@ -123,6 +123,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="file_handler.cpp" />
     <ClCompile Include="helpers.cpp" />
     <ClCompile Include="psu_crypt.cpp" />
     <ClCompile Include="Source.cpp" />
