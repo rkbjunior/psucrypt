@@ -48,9 +48,8 @@ int main()
         cout << "*******************************\n";
         cout << " 1 - Encrypt a file.\n";
         cout << " 2 - Decrypt a file.\n";
-        cout << " 3 - Print file contents.\n";
-        cout << " 4 - Turn off Verbose Logging.\n";
-        cout << " 5 - Exit.\n";
+        cout << " 3 - Turn off Verbose Logging.\n";
+        cout << " 4 - Exit.\n";
         cout << " Enter your choice and press return: ";
 
         cin >> option;
@@ -129,10 +128,6 @@ int main()
             }
             break;
         case 3:
-            cout << "Print file contents.\n";
-            // rest of code here
-            break;
-        case 4:
             cout << "Change Log Options [0: NONE, 1: INFO, 2: VERBOSE]\n";
             cin >> LOGGING;
             if (cin.fail()) {
@@ -141,7 +136,7 @@ int main()
             }
             cout << endl;
             break;
-        case 5:
+        case 4:
             cout << "End of Program.\n";
             running = false;
             break;
