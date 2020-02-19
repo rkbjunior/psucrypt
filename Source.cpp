@@ -7,102 +7,11 @@
 #include <filesystem>
 #include "psu_crypt.h"
 #include "helpers.h"
+#include "fileio.h"
 
 using namespace std;
 
 int LOGGING = 1;
-
-string Convert64ToString(uint64_t value) {
-    string result;
-
-    for (int i = 7; i >= 0; i--) {
-        result.push_back(value >> (i * 8) & 0x0000000000FF);
-    }
-
-    return result;
-}
-
-void GetPlainTextFromFile(vector<char>* plainTextBuffer, string fileName) {
-    ifstream plaintextFile(fileName, ios::in | ios::binary | std::ios::ate);
-    streamsize psize = plaintextFile.tellg();
-
-    while (psize % 8 != 0) {
-
-        psize++;
-    }
-
-    plainTextBuffer->resize(psize);
-
-    plaintextFile.seekg(0, std::ios::beg);
-
-    plaintextFile.read(plainTextBuffer->data(), psize);
-
-}
-
-void GetCipherTextFromFile(vector<uint64_t>* cipherTextBuffer, string fileName) {
-    ifstream ciphertextFile;
-    ciphertextFile.open(fileName, ios::in | ios::binary);
-
-    uint64_t result = 0;
-
-    while (!ciphertextFile.eof()) {
-        ciphertextFile >> std::hex;
-        ciphertextFile >> result;
-
-        cipherTextBuffer->push_back(result);
-    }
-    cipherTextBuffer->pop_back();
-}
-
-void WriteToFile(uint64_t ciphertext, const char * fileName) {
-    ofstream outputFile;
-    string str;
-    uint64_t out;
-
-    outputFile.open(fileName, ios::out | ios::binary | ios::app);
-    
-    if (fileName == "ciphertext.txt") {
-        outputFile << std::hex << ciphertext << std::dec << " ";
-    }
-    else {
-        string ptext = Convert64ToString(ciphertext);
-
-        outputFile << ptext;
-    }
-
-}
-
-uint64_t GetKeyFromFile(string fileName) {
-    ifstream keyFile;
-    keyFile.open(fileName, ios::in | ios::binary);
-
-    uint64_t result = 0;
-
-    keyFile >> std::hex;
-    keyFile >> result;
-
-    return result;
-}
-
-uint64_t GetBlockOfPlainText(vector<char> * plaintextBuffer) {
-    char pStream[sizeof(uint64_t)];
-    std::reverse(plaintextBuffer->begin(), plaintextBuffer->begin() + 8);
-    copy_n(plaintextBuffer->begin(), 8, pStream);
-
-    //reverse(pStream, &pStream[strlen(pStream)]);
-
-    uint64_t result = 0;
-    memcpy(&result, pStream, sizeof(result));
-    
-    return result;
-}
-
-uint64_t GetBlockOfCipherText(vector<uint64_t>* ciphertextBuffer) {
-    char pStream[sizeof(uint64_t)];
-    //std::reverse(ciphertextBuffer->begin(), ciphertextBuffer->end());
-
-    return ciphertextBuffer->at(0);
-}
 
 int main()
 {
@@ -203,12 +112,10 @@ int main()
             key = GetKeyFromFile(keyFileName);
 
             while (cipherTextBuffer.size() > 0) {
-                uint64_t ciphertextBlock = GetBlockOfCipherText(&cipherTextBuffer);
+                uint64_t ciphertextBlock = cipherTextBuffer.at(0);
                 cipherTextBuffer.erase(cipherTextBuffer.begin(), cipherTextBuffer.begin() + 1);
 
                 uint64_t block = encrypt_decrypt(&key, &ciphertextBlock, false);
-
-                
 
                 WriteToFile(block, "decrypted_plaintext.txt");
 

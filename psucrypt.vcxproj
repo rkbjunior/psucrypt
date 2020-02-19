@@ -123,19 +123,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="file_handler.cpp" />
+    <ClCompile Include="fileio.cpp" />
     <ClCompile Include="helpers.cpp" />
     <ClCompile Include="psu_crypt.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="key.txt" />
-    <Text Include="key2.txt" />
     <Text Include="plaintext.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="fileio.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="psu_crypt.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -3,10 +3,31 @@
 #include <iomanip>
 #include <iostream>
 #include "helpers.h"
+#include "psu_crypt.h"
 
 using namespace std;
 
 int LOGGINGA = 1;
+
+/*
+Gets a 64 bit block from the plain text buffer.
+Reverses the plain text so the bits are in the right places
+and then copies the result into a character array before finally
+being copied into a uint64_t
+
+Param: plainTextBuffer - A pointer to the current buffer of plain text.
+Returns: a uint64_t representation of the string.
+*/
+uint64_t GetBlockOfPlainText(vector<char>* plainTextBuffer) {
+    char pStream[sizeof(uint64_t)];
+    std::reverse(plainTextBuffer->begin(), plainTextBuffer->begin() + 8);
+    copy_n(plainTextBuffer->begin(), 8, pStream);
+
+    uint64_t result = 0;
+    memcpy(&result, pStream, sizeof(result));
+
+    return result;
+}
 
 uint16_t g(uint16_t w, int* round, const vector<uint8_t>* subkeys) {
     const int ftable[] = {
