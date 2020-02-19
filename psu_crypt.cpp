@@ -89,7 +89,7 @@ void encrypt_ksched(uint64_t* key, vector<uint8_t>* subkeys) {
         uint32_t tempkey;
         uint8_t subKey;
 
-        *key = rotate(*key, 1);
+        *key = leftRotate(*key, 1);
 
         if (toggle) {
             tempkey = *key >> 32 & 0x00000000FFFFFFFF;
@@ -118,12 +118,27 @@ uint64_t WhitenKey(uint64_t key, uint64_t plaintext) {
     return wKey;
 }
 
-uint64_t encrypt(uint64_t * key, uint64_t * plaintextBlock) {
+uint64_t encrypt_decrypt(uint64_t * key, uint64_t * plaintextBlock, bool encrypt) {
     uint64_t wKey = WhitenKey(*key, *plaintextBlock);
 
-    //Compute all the subkeys
     vector<uint8_t> subkeys;
+    std::string mode = "ENCRYPTION";
+    std::string blockType = "Plaintext: ";
+
     encrypt_ksched(key, &subkeys);
+
+    if (!encrypt) {
+        reverse(subkeys.begin(), subkeys.end());
+
+        for (int i = 0; i < 192; (i += 12)) { 
+            reverse(subkeys.begin() + i, subkeys.begin() + (i + 12));
+        }
+        mode = "DECRYPTION";
+        blockType = "Ciphertext: ";
+    }
+    else {
+        encrypt_ksched(key, &subkeys);
+    }
 
     vector<uint16_t> result;
 
@@ -132,9 +147,9 @@ uint64_t encrypt(uint64_t * key, uint64_t * plaintextBlock) {
     uint16_t nextR1 = (wKey >> 32) & 0x000000000000FFFF;
     uint16_t nextR0 = (wKey >> 48) & 0x000000000000FFFF;
 
-    cout << "ENCRYPTION" << endl;
-    cout << "Plaintext: " << std::hex << plaintextBlock << std::dec << endl;
-    cout << "Key = " << std::hex << key << std::dec << endl;
+    cout << mode << endl;
+    cout << blockType << std::hex << *plaintextBlock << std::dec << endl;
+    cout << "Key = " << std::hex << *key << std::dec << endl;
     cout << "Whitened Key = " << std::hex << wKey << std::dec << endl << endl;
 
     int round = 0;
@@ -181,9 +196,14 @@ uint64_t encrypt(uint64_t * key, uint64_t * plaintextBlock) {
     //undo the swap
     //uint64_t unswap = ((uint64_t)nextR1 << 48) + ((uint64_t)nextR0 << 32) + ((uint64_t)nextR3 << 16) + nextR2;
 
-    uint64_t cipherText = WhitenKey(unswap, *key);
+    uint64_t block = WhitenKey(unswap, *key);
 
-    cout << "Ciphertext: 0x" << std::hex << unsigned(cipherText >> 32) << unsigned(cipherText) << std::dec << endl;
+    if (blockType == "Ciphertext: ") {
+        cout << "Plaintext: 0x" << std::hex << unsigned(block >> 32) << unsigned(block) << std::dec << endl;
+    }
+    else {
+        cout << "Ciphertext: 0x" << std::hex << unsigned(block >> 32) << unsigned(block) << std::dec << endl;
+    }
 
-    return cipherText;
+    return block;
 }

@@ -1,9 +1,11 @@
 #include <fstream>
+#include <sstream>
 #include <vector>
 #include <cstdint>
 #include <iostream>
 #include <iomanip>
 #include "psu_crypt.h"
+#include "helpers.h"
 
 using namespace std;
 
@@ -46,19 +48,30 @@ uint64_t GetBlockOfPlainText(vector<char> * plaintextBuffer) {
 
 int main()
 {
+    //Read the files in this case the secret key is ab$ra85T
     vector<char> plaintextBuffer = GetPlainTextFromFile();
     uint64_t key = GetKeyFromFile();
-    uint64_t plaintextBlock = GetBlockOfPlainText(&plaintextBuffer);
-    uint64_t cipherText;
-    uint64_t plainText;
 
+    //Get the first 64 bit block of plaintext to encrypt/decrypt
+    //Then remove those bits from the buffer so we dont read them again
+    uint64_t plaintextBlock = GetBlockOfPlainText(&plaintextBuffer);
     plaintextBuffer.erase(plaintextBuffer.begin(), plaintextBuffer.begin() + 8);
 
-    plaintextBlock = 0x7365637572697479;
-    
-    cipherText = encrypt(&key, &plaintextBlock);
-    //plainText = decrypt(&key, &cipherText);
+    uint64_t cipherText = encrypt_decrypt(&key, &plaintextBlock, true);
+    uint64_t plainText = encrypt_decrypt(&key, &cipherText, false);
 
+    std::ostringstream o;
+    o << plaintextBlock;
+    string str; 
+    str += o.str();
+
+    std::string ptext;
+    hex2ascii(str, ptext);
+
+
+    cout << endl;
+    cout << ptext << endl;
+    cout << cipherText << endl;
 
     cout << "Good Bye from PSU_CRYPT!" << endl;
     return 0;
